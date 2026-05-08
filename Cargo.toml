@@ -13,7 +13,7 @@ keywords = ["image", "convert", "avif", "jxl", "heic"]
 categories = ["multimedia::images", "command-line-utilities", "gui"]
 
 [dependencies]
-eframe = "0.34.1"
+eframe = "0.34.2"
 rfd = "0.17"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "tiff", "webp", "gif", "bmp", "ico", "hdr", "exr", "qoi", "pnm", "dds", "ff", "tga", "rayon"] }
 rayon = "1.12"
