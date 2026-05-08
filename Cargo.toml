@@ -1,0 +1,24 @@
+[package]
+name = "img-convert"
+version = "0.3.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["Fabian Wimberger <fabian.wimberger@proton.me>"]
+description = "Batch resize and compress images to JPG, AVIF, JXL, or HEIC."
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/fabianwimberger/img-convert"
+homepage = "https://github.com/fabianwimberger/img-convert"
+keywords = ["image", "convert", "avif", "jxl", "heic"]
+categories = ["multimedia::images", "command-line-utilities", "gui"]
+
+[dependencies]
+eframe = "0.34.1"
+rfd = "0.17"
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "tiff", "webp", "gif", "bmp", "ico", "hdr", "exr", "qoi", "pnm", "dds", "ff", "tga", "rayon"] }
+rayon = "1.12"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
