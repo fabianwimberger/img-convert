@@ -22,3 +22,22 @@ rayon = "1.12"
 lto = true
 codegen-units = 1
 strip = true
+
+[package.metadata.deb]
+maintainer = "Fabian Wimberger <fabian.wimberger@proton.me>"
+copyright = "2026, Fabian Wimberger <fabian.wimberger@proton.me>"
+license-file = ["LICENSE", "0"]
+extended-description = """
+img-convert is a small cross-platform desktop GUI for batch resizing and \
+compressing folders of images to JPG, AVIF, JXL, or HEIC. It wraps the \
+encoders cjpeg, avifenc, cjxl, and heif-enc behind a native UI, with EXIF \
+passthrough via exiftool when available."""
+section = "graphics"
+priority = "optional"
+depends = "$auto"
+recommends = "libjpeg-turbo-progs, libavif-bin, libjxl-tools, libheif-examples, libimage-exiftool-perl"
+assets = [
+    ["target/release/img-convert", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/img-convert/README.md", "644"],
+    ["LICENSE", "usr/share/doc/img-convert/LICENSE", "644"],
+]
