@@ -102,16 +102,16 @@ fn open_image(src: &Path) -> Result<DynamicImage, String> {
 }
 
 fn copy_exif_with_exiftool(src: &Path, dst: &Path) -> Result<(), String> {
-    let status = Command::new("exiftool")
+    let output = Command::new("exiftool")
         .arg("-TagsFromFile")
         .arg(src)
         .arg("-all:all")
         .arg("-overwrite_original")
         .arg(dst)
-        .status()
+        .output()
         .map_err(|e| format!("exiftool spawn: {e}"))?;
-    if !status.success() {
-        return Err(format!("exiftool exited with {status}"));
+    if !output.status.success() {
+        return Err(command_failure("exiftool", output.status, &output.stderr));
     }
     Ok(())
 }
@@ -122,13 +122,13 @@ fn transcode_jpeg_to_jxl(src: &Path, dst: &Path, keep_exif: bool) -> Result<(), 
     if !keep_exif {
         command.arg("--strip");
     }
-    let status = command
+    let output = command
         .arg(src)
         .arg(dst)
-        .status()
+        .output()
         .map_err(|e| format!("cjxl spawn: {e}"))?;
-    if !status.success() {
-        return Err(format!("cjxl exited with {status}"));
+    if !output.status.success() {
+        return Err(command_failure("cjxl", output.status, &output.stderr));
     }
     Ok(())
 }
@@ -177,7 +177,7 @@ fn run_with_stdin(mut command: Command, input: &[u8], name: &str) -> Result<(), 
     let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("{name} spawn: {e}"))?;
 
@@ -189,9 +189,11 @@ fn run_with_stdin(mut command: Command, input: &[u8], name: &str) -> Result<(), 
         .map_err(|e| format!("{name} stdin write: {e}"))?;
     drop(child.stdin.take());
 
-    let status = child.wait().map_err(|e| format!("{name} wait: {e}"))?;
-    if !status.success() {
-        return Err(format!("{name} exited with {status}"));
+    let output = child
+        .wait_with_output()
+        .map_err(|e| format!("{name} wait: {e}"))?;
+    if !output.status.success() {
+        return Err(command_failure(name, output.status, &output.stderr));
     }
     Ok(())
 }
@@ -237,19 +239,38 @@ fn encode_heic(img: &DynamicImage, dst: &Path, quality: f32) -> Result<(), Strin
     img.save(tmp.path())
         .map_err(|e| format!("tif write: {e}"))?;
 
-    let status = Command::new("heif-enc")
+    let output = Command::new("heif-enc")
         .arg("-q")
         .arg(format!("{}", quality.round() as i32))
         .arg(tmp.path())
         .arg("-o")
         .arg(dst)
-        .status()
+        .output()
         .map_err(|e| format!("heif-enc spawn: {e}"))?;
 
-    if !status.success() {
-        return Err(format!("heif-enc exited with {status}"));
+    if !output.status.success() {
+        return Err(command_failure("heif-enc", output.status, &output.stderr));
     }
     Ok(())
+}
+
+fn command_failure(name: &str, status: std::process::ExitStatus, stderr: &[u8]) -> String {
+    let detail = String::from_utf8_lossy(stderr);
+    let detail = detail.trim();
+    if detail.is_empty() {
+        format!("{name} exited with {status}")
+    } else {
+        format!("{name} exited with {status}: {}", truncate_stderr(detail))
+    }
+}
+
+fn truncate_stderr(stderr: &str) -> &str {
+    const LIMIT: usize = 1200;
+    let mut end = stderr.len().min(LIMIT);
+    while !stderr.is_char_boundary(end) {
+        end -= 1;
+    }
+    &stderr[..end]
 }
 
 struct TmpFile {
@@ -348,5 +369,13 @@ mod tests {
         let png = png_bytes(&img).unwrap();
         let decoded = image::load_from_memory(&png).unwrap();
         assert!(!decoded.color().has_alpha());
+    }
+
+    #[test]
+    fn truncate_stderr_preserves_utf8_boundaries() {
+        let stderr = "a".repeat(1199) + "€more";
+        let truncated = truncate_stderr(&stderr);
+        assert!(truncated.len() <= 1200);
+        assert!(truncated.is_char_boundary(truncated.len()));
     }
 }
