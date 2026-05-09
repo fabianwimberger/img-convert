@@ -25,7 +25,7 @@ pub fn convert(
         && let Ok((w, h)) = image_dimensions(src)
         && short_side.is_none_or(|target| w.min(h) <= target)
     {
-        return transcode_jpeg_to_jxl(src, out_path);
+        return transcode_jpeg_to_jxl(src, out_path, keep_exif);
     }
 
     let img = resize(open_image(src)?, short_side);
@@ -37,7 +37,7 @@ pub fn convert(
     }
 
     if keep_exif && command_available("exiftool") {
-        let _ = copy_exif_with_exiftool(src, out_path);
+        copy_exif_with_exiftool(src, out_path)?;
     }
 
     Ok(())
@@ -63,11 +63,15 @@ pub fn resize(img: DynamicImage, short_side: Option<u32>) -> DynamicImage {
 pub fn command_available(cmd: &str) -> bool {
     static CACHE: OnceLock<Mutex<HashMap<String, bool>>> = OnceLock::new();
     let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
-    if let Some(value) = cache.lock().unwrap().get(cmd).copied() {
-        return value;
+    {
+        let guard = cache.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(value) = guard.get(cmd).copied() {
+            return value;
+        }
     }
     let found = locate_command(cmd).is_some();
-    cache.lock().unwrap().insert(cmd.to_owned(), found);
+    let mut guard = cache.lock().unwrap_or_else(|e| e.into_inner());
+    guard.insert(cmd.to_owned(), found);
     found
 }
 
@@ -112,9 +116,13 @@ fn copy_exif_with_exiftool(src: &Path, dst: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn transcode_jpeg_to_jxl(src: &Path, dst: &Path) -> Result<(), String> {
-    let status = Command::new("cjxl")
-        .arg("--container=1")
+fn transcode_jpeg_to_jxl(src: &Path, dst: &Path, keep_exif: bool) -> Result<(), String> {
+    let mut command = Command::new("cjxl");
+    command.arg("--container=1");
+    if !keep_exif {
+        command.arg("--strip");
+    }
+    let status = command
         .arg(src)
         .arg(dst)
         .status()
@@ -135,21 +143,33 @@ fn ppm_bytes(img: &DynamicImage) -> Vec<u8> {
 }
 
 fn png_bytes(img: &DynamicImage) -> Result<Vec<u8>, String> {
-    let rgb = img.to_rgb8();
     let mut png = Vec::new();
     let encoder = PngEncoder::new_with_quality(
         &mut png,
         CompressionType::Uncompressed,
         PngFilterType::NoFilter,
     );
-    encoder
-        .write_image(
-            rgb.as_raw(),
-            rgb.width(),
-            rgb.height(),
-            ExtendedColorType::Rgb8,
-        )
-        .map_err(|e| format!("png encode: {e}"))?;
+    if img.color().has_alpha() {
+        let rgba = img.to_rgba8();
+        encoder
+            .write_image(
+                rgba.as_raw(),
+                rgba.width(),
+                rgba.height(),
+                ExtendedColorType::Rgba8,
+            )
+            .map_err(|e| format!("png encode: {e}"))?;
+    } else {
+        let rgb = img.to_rgb8();
+        encoder
+            .write_image(
+                rgb.as_raw(),
+                rgb.width(),
+                rgb.height(),
+                ExtendedColorType::Rgb8,
+            )
+            .map_err(|e| format!("png encode: {e}"))?;
+    }
     Ok(png)
 }
 
@@ -207,7 +227,7 @@ fn encode_jxl(img: &DynamicImage, dst: &Path, quality: f32) -> Result<(), String
         .arg("-e")
         .arg("7")
         .arg("--container=1")
-        .arg("/dev/stdin")
+        .arg("-")
         .arg(dst);
     run_with_stdin(command, &ppm_bytes(img), "cjxl")
 }
@@ -307,5 +327,26 @@ mod tests {
         let resized = resize(img, None);
         assert_eq!(resized.width(), 3000);
         assert_eq!(resized.height(), 4000);
+    }
+
+    #[test]
+    fn png_bytes_preserves_alpha() {
+        let img = DynamicImage::ImageRgba8(image::RgbaImage::from_pixel(
+            2,
+            2,
+            image::Rgba([255, 0, 0, 128]),
+        ));
+        let png = png_bytes(&img).unwrap();
+        let decoded = image::load_from_memory(&png).unwrap();
+        assert!(decoded.color().has_alpha());
+    }
+
+    #[test]
+    fn png_bytes_rgb_has_no_alpha() {
+        let img =
+            DynamicImage::ImageRgb8(image::RgbImage::from_pixel(2, 2, image::Rgb([255, 0, 0])));
+        let png = png_bytes(&img).unwrap();
+        let decoded = image::load_from_memory(&png).unwrap();
+        assert!(!decoded.color().has_alpha());
     }
 }
