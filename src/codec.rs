@@ -1,4 +1,4 @@
-use crate::files::is_jpeg;
+use crate::files::{is_jpeg, is_jxl};
 use crate::settings::OutputFormat;
 use image::codecs::png::{CompressionType, FilterType as PngFilterType, PngEncoder};
 use image::image_dimensions;
@@ -98,7 +98,25 @@ fn locate_command(cmd: &str) -> Option<PathBuf> {
 }
 
 fn open_image(src: &Path) -> Result<DynamicImage, String> {
+    if is_jxl(src) {
+        return open_jxl(src);
+    }
+
     image::open(src).map_err(|e| format!("decode: {e}"))
+}
+
+fn open_jxl(src: &Path) -> Result<DynamicImage, String> {
+    let tmp = TmpFile::new("png");
+    let output = Command::new("djxl")
+        .arg(src)
+        .arg(tmp.path())
+        .output()
+        .map_err(|e| format!("djxl spawn: {e}"))?;
+    if !output.status.success() {
+        return Err(command_failure("djxl", output.status, &output.stderr));
+    }
+
+    image::open(tmp.path()).map_err(|e| format!("djxl png decode: {e}"))
 }
 
 fn copy_exif_with_exiftool(src: &Path, dst: &Path) -> Result<(), String> {
