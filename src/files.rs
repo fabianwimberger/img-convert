@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 const SUPPORTED_EXTENSIONS: &[&str] = &[
     "jpg", "jpeg", "jpe", "jif", "jfif", "png", "apng", "tif", "tiff", "webp", "gif", "bmp", "dib",
     "ico", "tga", "icb", "vda", "vst", "ff", "farbfeld", "qoi", "pbm", "pgm", "ppm", "pnm", "pam",
-    "exr", "hdr", "dds",
+    "exr", "hdr", "dds", "jxl",
 ];
 
 pub fn collect_images(dir: &Path) -> Vec<PathBuf> {
@@ -29,6 +29,10 @@ pub fn is_supported(path: &Path) -> bool {
 pub fn is_jpeg(path: &Path) -> bool {
     extension(path)
         .is_some_and(|ext| matches!(ext.as_str(), "jpg" | "jpeg" | "jpe" | "jif" | "jfif"))
+}
+
+pub fn is_jxl(path: &Path) -> bool {
+    extension(path).is_some_and(|ext| ext == "jxl")
 }
 
 pub fn reserve_output(
@@ -66,11 +70,10 @@ mod tests {
     fn is_supported_accepts_common_formats() {
         for name in [
             "a.jpg", "a.JPG", "a.jpeg", "a.png", "a.tif", "a.TIFF", "a.webp", "a.gif", "a.bmp",
-            "a.ico", "a.tga", "a.exr", "a.hdr", "a.qoi",
+            "a.ico", "a.tga", "a.exr", "a.hdr", "a.qoi", "a.jxl",
         ] {
             assert!(is_supported(Path::new(name)), "{name}");
         }
-        assert!(!is_supported(Path::new("a.jxl")));
         assert!(!is_supported(Path::new("a.txt")));
         assert!(!is_supported(Path::new("a")));
     }
