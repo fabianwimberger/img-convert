@@ -86,7 +86,7 @@ impl eframe::App for App {
                     .fill(colors.bg)
                     .inner_margin(egui::Margin::symmetric(24, 22)),
             )
-            .show_inside(ui, |ui| {
+            .show(ui, |ui| {
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
