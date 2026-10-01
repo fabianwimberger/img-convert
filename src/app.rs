@@ -408,9 +408,7 @@ impl App {
         let Some(file) = dropped.into_iter().next() else {
             return;
         };
-        let Some(path) = file.path else {
-            return;
-        };
+        let path = file.path().to_path_buf();
         let folder = if path.is_dir() {
             Some(path)
         } else {
