@@ -3,7 +3,6 @@ updates:
   # Cargo dependencies
   - package-ecosystem: "cargo"
     directory: "/"
-    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -16,7 +15,6 @@ updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
-    target-branch: "develop"
     schedule:
       interval: "weekly"
       day: "monday"
