@@ -26,17 +26,6 @@ Photographers and content creators routinely need to push hundreds of RAW export
 - **Light / dark theme**
 - **Cross-platform** — Linux, macOS, Windows
 
-## Pipeline
-
-```mermaid
-flowchart LR
-    S[Source images] --> D[Decode<br/>image-rs]
-    D --> R[Lanczos3 resize]
-    R --> E[Encode<br/>cjpeg / avifenc / cjxl / heif-enc]
-    E --> X[EXIF copy<br/>exiftool]
-    X --> O[folder/converted/*]
-```
-
 ## Quick Start
 
 ```bash
@@ -72,6 +61,17 @@ Only the encoders for formats you intend to use need to be on `$PATH`. The GUI s
 | JXL    | `cjxl`    | `libjxl` / `jpeg-xl`              |
 | HEIC   | `heif-enc`| `libheif` / `libheif-tools`       |
 | EXIF   | `exiftool`| `perl-image-exiftool` / `exiftool`|
+
+## How It Works
+
+```mermaid
+flowchart LR
+    S[Source images] --> D[Decode<br/>image-rs]
+    D --> R[Lanczos3 resize]
+    R --> E[Encode<br/>cjpeg / avifenc / cjxl / heif-enc]
+    E --> X[EXIF copy<br/>exiftool]
+    X --> O[folder/converted/*]
+```
 
 ## Configuration
 
