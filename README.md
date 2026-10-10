@@ -7,7 +7,7 @@ A small cross-platform desktop GUI for batch resizing and compressing folders of
 
 ## Background
 
-Photographers and content creators routinely need to push hundreds of RAW exports through the same resize-and-compress pipeline before publishing to web or mobile. Doing it through the encoder CLIs is fast but tedious; doing it through Photoshop or Lightroom is slow and heavy. This wraps the best-of-breed encoders (`cjpeg`, `avifenc`, `cjxl`, `heif-enc`) behind a small native UI so a folder can be batched in a few clicks, with EXIF passthrough and a JPEG → JXL lossless fast path.
+Pushing a few hundred exports through the same resize-and-compress step before publishing is fast but tedious with the encoder CLIs, and slow in Photoshop or Lightroom. This wraps `cjpeg`, `avifenc`, `cjxl`, and `heif-enc` behind a small native UI so a folder can be batched in a few clicks, with EXIF passthrough and a JPEG → JXL lossless fast path.
 
 <p align="center">
   <img src="assets/screenshot.png" width="100%" alt="img-convert UI">
@@ -29,25 +29,15 @@ Photographers and content creators routinely need to push hundreds of RAW export
 ## Quick Start
 
 ```bash
-# Build
 cargo build --release
-
-# Run
 ./target/release/img-convert
 ```
 
-## Install
-
-Install into `~/.local/bin/img-convert`:
+To install it instead:
 
 ```bash
-cargo install --path . --root ~/.local --force
-```
-
-Or use cargo's default location (`~/.cargo/bin/img-convert`):
-
-```bash
-cargo install --path . --force
+cargo install --path . --root ~/.local --force   # ~/.local/bin/img-convert
+cargo install --path . --force                   # or ~/.cargo/bin/img-convert
 ```
 
 ## External Encoders
