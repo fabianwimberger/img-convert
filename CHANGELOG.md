@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.4] - 2026-10-23
+
+img-convert now runs on eframe 0.37.0.
+
+### Dependencies
+
+- Bump `eframe` from 0.36.2 to 0.37.0
+
+### Documentation & Links
+
+- [README](https://github.com/fabianwimberger/img-convert#readme)
+
 ## [v0.4.3] - 2026-10-01
 
 img-convert now runs on eframe 0.36.2 and no longer pulls in vulnerable quick-xml versions.
