@@ -70,21 +70,21 @@ jobs:
   audit:
     name: Audit
     runs-on: ubuntu-latest
+    # Plain cargo-audit: rustsec/audit-check writes a check run, which needs write access and
+    # fails when the same commit is built on main and develop at once.
     permissions:
       contents: read
-      checks: write
-      issues: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
 
       - name: Audit
-        uses: rustsec/audit-check@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: cargo audit
 
   ci:
     name: ci
