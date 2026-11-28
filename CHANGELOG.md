@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.4.5] - 2026-11-28
 
-img-convert now runs on rfd 0.18.0, the crate behind its file dialogs.
+img-convert now runs on rfd 0.18.0 for its file dialogs and no longer pulls in a `url` release with RUSTSEC-2026-0592.
 
 ### Dependencies
 
 - Bump `rfd` from 0.17.2 to 0.18.0
+- Bump `url` from 2.5.8 to 2.5.9
 
 ### Documentation & Links
 
